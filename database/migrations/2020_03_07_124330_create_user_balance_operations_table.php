@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateProductsTable extends Migration
+class CreateUserBalanceOperationsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,18 +13,13 @@ class CreateProductsTable extends Migration
      */
     public function up()
     {
-        Schema::create('products', function (Blueprint $table) {
+        Schema::create('user_balance_operations', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('title',100);
-            $table->string('chars',100);
-
-
-
-            $table->string('status',1);
-            $table->string('price',100);
-            $table->string('description',1000);
-
+            $table->bigInteger('user_id')->unsigned();
+            $table->string('desc');
+            $table->integer('sum');
             $table->timestamps();
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
@@ -35,6 +30,6 @@ class CreateProductsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('products');
+        Schema::dropIfExists('user_balance_operations');
     }
 }

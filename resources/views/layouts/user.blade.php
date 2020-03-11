@@ -87,6 +87,7 @@
                         Редактровать
                     </a>
                 </div>
+
             </div>
             <div class="info-container">
 
@@ -117,19 +118,32 @@
                     </a>
                 </li>
                 <li>
-                    <a href="">
+                    <a href="{{route('Refers')}}">
                         <i class="material-icons">accessibility_new</i>
                         <span>Приглашенные пользователи</span>
                     </a>
                 </li>
                 <li>
-                    <a href="">
+                    <a href="{{route('Bonuses')}}">
+                        <i class="material-icons">redeem</i>
+                        <span>Бонусы</span>
+
+                    </a>
+                </li>
+                <li>
+                    <a href="{{route('Orders')}}">
+                        <i class="material-icons">move_to_inbox</i>
+                        <span>Заказы</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{route('Bots')}}">
                         <i class="material-icons">how_to_reg</i>
                         <span>Боты</span>
                     </a>
                 </li>
                 <li>
-                    <a href="{{route('Tree')}}">
+                    <a href="{{route('Tree',$user->id)}}">
                         <i class="material-icons">view_comfy</i>
                         <span>Матрица</span>
                     </a>

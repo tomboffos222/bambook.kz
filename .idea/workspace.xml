@@ -3,7 +3,24 @@
   <component name="ChangeListManager">
     <list default="true" id="07a05a10-5ae5-4374-8ba3-81bf9f4419ae" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/migrations/2020_02_03_130213_create_orders_table.php" beforeDir="false" afterPath="$PROJECT_DIR$/database/migrations/2020_02_03_130213_create_orders_table.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/AdminController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/AdminController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/UserController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/UserController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Kernel.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Kernel.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Middleware/UserCheck.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Middleware/UserCheck.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Product.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Product.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/migrations/2020_01_07_070702_create_products_table.php" beforeDir="false" afterPath="$PROJECT_DIR$/database/migrations/2020_01_07_070702_create_products_table.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/admin/product.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/admin/product.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/admin/shop.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/admin/shop.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/admin/treeUser.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/admin/treeUser.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/layouts/base.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/layouts/base.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/layouts/user.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/layouts/user.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/main.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/main.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/order.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/order.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/register.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/register.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/tree.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/tree.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/treeUser.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/treeUser.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/withdraw.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/withdraw.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes/web.php" beforeDir="false" afterPath="$PROJECT_DIR$/routes/web.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -123,20 +140,20 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/resources/views" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="settings.editor.selected.configurable" value="editor.preferences.fonts.default" />
   </component>
   <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\user\Desktop\OSPanel\domains\rcore\app\Models" />
-    </key>
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/resources/views" />
       <recent name="C:\Users\user\Desktop\OSPanel\domains\rcore\resources\views" />
       <recent name="C:\Users\user\Desktop\OSPanel\domains\rcore\resources\views\layouts" />
       <recent name="C:\Users\user\Desktop\OSPanel\domains\rcore\app\Http\Middleware" />
       <recent name="C:\Users\user\Desktop\OSPanel\domains\rcore\resources\views\admin" />
-      <recent name="C:\Users\user\Desktop\OSPanel\domains\rcore\public" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\user\Desktop\OSPanel\domains\rcore\app\Models" />
     </key>
   </component>
   <component name="RunManager">
@@ -213,7 +230,24 @@
       <workItem from="1580735148525" duration="10297000" />
       <workItem from="1580822047023" duration="7741000" />
       <workItem from="1580842355136" duration="59000" />
-      <workItem from="1580897762773" duration="2223000" />
+      <workItem from="1580897762773" duration="3793000" />
+      <workItem from="1580983880601" duration="707000" />
+      <workItem from="1580993237502" duration="1096000" />
+      <workItem from="1580997208048" duration="36000" />
+      <workItem from="1581240261177" duration="7830000" />
+      <workItem from="1581253127169" duration="72000" />
+      <workItem from="1581326700068" duration="5184000" />
+      <workItem from="1581593972088" duration="633000" />
+      <workItem from="1582550541742" duration="1266000" />
+      <workItem from="1582627202712" duration="1276000" />
+      <workItem from="1583071853344" duration="567000" />
+      <workItem from="1583150673783" duration="11430000" />
+      <workItem from="1583432213600" duration="2888000" />
+      <workItem from="1583571629231" duration="20982000" />
+      <workItem from="1583846094774" duration="369000" />
+      <workItem from="1583849144698" duration="114000" />
+      <workItem from="1583849547272" duration="598000" />
+      <workItem from="1583920424649" duration="372000" />
     </task>
     <servers />
   </component>
@@ -225,19 +259,19 @@
       <screen x="0" y="0" width="1440" height="900" />
     </state>
     <state x="221" y="89" key="SettingsEditor/0.0.1440.900@0.0.1440.900" timestamp="1580735160411" />
-    <state x="397" y="279" key="com.intellij.ide.util.TipDialog" timestamp="1580842354429">
+    <state x="397" y="279" key="com.intellij.ide.util.TipDialog" timestamp="1583849546469">
       <screen x="0" y="0" width="1440" height="900" />
     </state>
-    <state x="397" y="279" key="com.intellij.ide.util.TipDialog/0.0.1440.900@0.0.1440.900" timestamp="1580842354429" />
+    <state x="397" y="279" key="com.intellij.ide.util.TipDialog/0.0.1440.900@0.0.1440.900" timestamp="1583849546469" />
     <state x="397" y="273" key="com.intellij.ide.util.TipDialog/0.23.1440.806@0.23.1440.806" timestamp="1580735148746" />
     <state x="397" y="279" key="com.intellij.ide.util.TipDialog/0.23.1440.808@0.23.1440.808" timestamp="1580729586676" />
-    <state x="385" y="210" key="run.anything.popup" timestamp="1580825966353">
+    <state x="385" y="210" key="run.anything.popup" timestamp="1583652738830">
       <screen x="0" y="0" width="1440" height="900" />
     </state>
-    <state x="385" y="210" key="run.anything.popup/0.0.1440.900@0.0.1440.900" timestamp="1580825966353" />
-    <state x="385" y="196" width="670" height="676" key="search.everywhere.popup" timestamp="1580828234632">
+    <state x="385" y="210" key="run.anything.popup/0.0.1440.900@0.0.1440.900" timestamp="1583652738830" />
+    <state x="385" y="196" width="670" height="676" key="search.everywhere.popup" timestamp="1583778753713">
       <screen x="0" y="0" width="1440" height="900" />
     </state>
-    <state x="385" y="196" width="670" height="676" key="search.everywhere.popup/0.0.1440.900@0.0.1440.900" timestamp="1580828234632" />
+    <state x="385" y="196" width="670" height="676" key="search.everywhere.popup/0.0.1440.900@0.0.1440.900" timestamp="1583778753713" />
   </component>
 </project>

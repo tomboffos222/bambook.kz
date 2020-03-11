@@ -1,10 +1,17 @@
 <div class="line">
     <div class="tree">
+
 {{--        <span>{{$user->level}}</span>--}}
         <div data-toggle="modal" data-target="#user_{{$user->id}}">
             <img src="https://cdn0.iconfinder.com/data/icons/user-collection-4/512/user-512.png" class="img-center img-circle propic" width="50px">
         </div>
-        <a href="{{route('Tree',$user->id)}}">{{$user->name}}</a>
+
+        @if($secondTree == null)
+            <a href="{{route('Tree',$user->id)}}">{{$user->name}}</a>
+            @else
+            <a href="{{route('Tree',$user->id)}}">{{$user->name}}</a>
+        @endif
+
         <!-- Modal -->
         <div id="user_{{$user->id}}" class="modal fade" role="dialog">
             <div class="modal-dialog">
@@ -44,7 +51,7 @@
                                 <td>Позиция на пирамиде</td>
                                 <td>{{$user->row + 1}}</td>
                             </tr>
-                            
+
                         </table>
                     </div>
                     <div class="modal-footer">
@@ -59,12 +66,19 @@
     <div class="children">
         @if($i < $maxColumnCount)
             @php
+                if ($secondTree == null){
                 $users = \App\Models\Tree::join('users','users.id','tree.user_id')->where('parent_id',$user->id)
                 ->select('tree.*','name','phone','login','email')
                 ->get();
+                }else{
+                    $users = \App\Tree2::join('users','users.id','tree2s.user_id')->where('parent_id',$user->id)
+                ->select('tree2s.*','name','phone','login','email')
+                ->get();
+                }
+
             @endphp
             @foreach($users as $user)
-                @component('treeUser',['user'=>$user,'maxColumnCount'=>$maxColumnCount,'i'=>$i +1])
+                @component('treeUser',['user'=>$user,'maxColumnCount'=>$maxColumnCount,'i'=>$i +1,'secondTree'=>$secondTree,])
 
                 @endcomponent
 

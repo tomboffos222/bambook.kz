@@ -7,13 +7,18 @@ use App\Models\User;
 use App\Models\Tree;
 use App\OrderProduct;
 use App\Orders;
+use App\Product_image;
+use Faker\Provider\Image;
 use Illuminate\Http\Request;
 use App\BlackListed;
 use App\Authors;
 use App\Categories;
+use Illuminate\Http\UploadedFile;
 use App\Withdrawal;
 use App\Product;
 use App\Message;
+use Illuminate\Support\Facades\Input;
+use Psy\Util\Str;
 
 class AdminController extends Controller
 {
@@ -44,6 +49,84 @@ class AdminController extends Controller
         $data['withdraws'] = Withdrawal::join('users','users.id','=', 'withdrawals.user_id')->select('withdrawals.*','name','phone','login','email')->orderBy('created_at','desc')->paginate(12);
 
         return view('admin.withdraws',$data);
+    }
+    public function CreateProduct(Request $request){
+        $rules = [
+            'img' => 'required',
+            'title' => 'required',
+            'price'=> 'required',
+            'category'=>'required',
+            'author'=>'required',
+            'description'=>'required|max:255',
+            'stock'=>'required',
+
+        ];
+        $messages = [
+            "img.required" => "Выберите фото",
+            "title.required" =>  "Введите название книги",
+            "price.required" => "Введите цену",
+            "category.required" => "Выберите категорию",
+            "author.required" => "Выберите автора",
+            "description.required" => "Введите описание",
+            "description.max" => "Максимальное число символов в описании 255",
+            "stock.required" => "Пометьте как товар в наличии",
+        ];
+        $validator = $this->validator($request->all(),$rules, $messages);
+
+        if ($validator->fails()){
+            return back()->withErrors($validator->errors());
+
+        }else{
+
+
+
+
+
+
+            if ($request->hasFile('img')){
+                $img = $request['img'];
+                $imgName = \Illuminate\Support\Str::random(10).$img->getClientOriginalName();
+                $path = public_path().'/uploads/';
+                $img->move($path,$imgName);
+                $product = new Product;
+                $product['title'] = $request['title'];
+                $product['price'] = $request['price'];
+                $product['chars'] = $request['category'];
+                $product['author'] = $request['author'];
+                $product['description'] = $request['description'];
+                $product['image1'] = '/uploads/'.$imgName;
+                if ($request->has('stock')){
+                    $product['status'] =1;
+                }
+                $product->save();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                return back()->with('message','Добавлено ');
+
+            }else{
+                return back()->withErrors('Не получилось');
+            }
+
+
+
+
+
+        }
     }
     public function Login(Request $request){
         $rules = [
@@ -80,6 +163,8 @@ class AdminController extends Controller
         $data['users'] = User::whereStatus('partner')->paginate(25);
         return view('admin.users',$data);
     }
+
+
     public function WithdrawAllow($id){
 
 
@@ -181,25 +266,31 @@ class AdminController extends Controller
             return back()->withErrors($validator->errors());
 
         } else {
-            $image = $request['image'];
+            if ($request->hasFile('image')){
+                $image = $request['image'];
+                $path = public_path().'/uploads/authors/';
+                $imageName = $image->getClientOriginalName();
+                $image->move($path,$imageName);
 
-            $image = "{{asset('/uploads/image/".$image."')}}";
+                $author = new Authors;
 
-            $author = new Authors;
+                $author->Name = $request['name'];
+                $author->Description = $request['description'];
+                $author->Address = $request['address'];
+                $author->image1 = '/uploads/authors/'.$imageName;
+                $author->Birth = $request['birth'];
+                $author->gender = $request['gender'];
+                $author->Books = $request['books'];
 
-            $author->Name = $request['name'];
-            $author->Description = $request['description'];
-            $author->Address = $request['address'];
-            $author->image1 = $image;
-            $author->Birth = $request['birth'];
-            $author->gender = $request['gender'];
-            $author->Books = $request['books'];
-
-            $author->save();
+                $author->save();
+                return back()->withMessage('Добавлено');
+            }else{
+                return back()->withErrors('Ошибка');
+            }
 
 
 
-            return back()->withMessage('Добавлено');
+
 
 
 
@@ -312,9 +403,14 @@ class AdminController extends Controller
             $new->parents = $lastUser->parents;
             $new->row = $parentUser->row + 1;
             $new->save();
+            $this->Giver($new);
 
-        }else{
+        }elseif(count($neighbours) == 2){
+
             $parentUser = Tree::where('id',$lastUser->parent_id)->first();
+            $parentProfile = User::where('id',$parentUser->id)->first();
+            $parentProfile['bill'] += 5000;
+            $parentProfile->save();
             $nextUser = Tree::where('row',$parentUser->row)->where('id','>',$parentUser->id)->first();
             if ($nextUser){
                 $new = new Tree();
@@ -323,6 +419,11 @@ class AdminController extends Controller
                 $new->parents = $nextUser->parents.','.$nextUser->id;
                 $new->row = $nextUser->row + 1;
                 $new->save();
+                $this->Giver($new);
+
+
+
+
             }else{
                 $nextUser = Tree::where('row',$lastUser->row)->first();
                 $new = new Tree();
@@ -333,7 +434,71 @@ class AdminController extends Controller
                 $new->row = $nextUser->row + 1;
 
                 $new->save();
+                $this->Giver($new);
             }
+
+        }
+        else{
+            $parentUser = Tree::where('id',$lastUser->parent_id)->first();
+            $nextUser = Tree::where('row',$parentUser->row)->where('id','>',$parentUser->id)->first();
+            if ($nextUser){
+                $new = new Tree();
+                $new->user_id = $user_id;
+                $new->parent_id = $nextUser->id;
+                $new->parents = $nextUser->parents.','.$nextUser->id;
+                $new->row = $nextUser->row + 1;
+                $new->save();
+                $this->Giver($new);
+            }else{
+                $nextUser = Tree::where('row',$lastUser->row)->first();
+                $new = new Tree();
+                $new->user_id = $user_id;
+                $new->parent_id = $nextUser->id;
+                $new->parent_id = $nextUser->id;
+                $new->parents = $nextUser->parents.','.$nextUser->id;
+                $new->row = $nextUser->row + 1;
+
+                $new->save();
+                $this->Giver($new);
+            }
+
+
+        }
+
+
+    }
+    protected  function Giver($new){
+        $parents = explode(',',$new->parents);
+
+        $parents = array_reverse($parents);
+        $users = Tree::where('parent_id',$parents[0])->get();
+        $users1 = Tree::where('parent_id',$parents[1])->get();
+        $users2 = Tree::where('parent_id',$parents[2])->get();
+        $users3 = Tree::where('parent_id',$parents[3])->get();
+
+        if(count($users3)  == 4){
+            $parentAccount  = User::where('parent_id',$parents[3])->first();
+            $parentAccount['bill'] += 10000;
+            $parentAccount->save();
+
+        }
+        if (count($users2) == 8){
+            $parentAccount  = User::where('parent_id',$parents[2])->first();
+            $parentAccount['bill'] += 20000;
+            $parentAccount->save();
+
+        }
+        if (count($users1) == 16){
+            $parentAccount  = User::where('parent_id',$parents[1])->first();
+            $parentAccount['bill'] += 40000;
+            $parentAccount->save();
+
+        }
+        if (count($users) == 32){
+            $parentAccount  = User::where('parent_id',$parents[0])->first();
+            $parentAccount['bill'] += 100000;
+            $parentAccount->save();
+
         }
     }
 

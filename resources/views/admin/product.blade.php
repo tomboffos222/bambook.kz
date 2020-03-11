@@ -3,7 +3,7 @@
 
 @section('content')
 	<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
- 		 Добавить товар	
+ 		 Добавить товар
 	</button>
 	<table class="table table-striped">
 		<thead>
@@ -20,7 +20,7 @@
 				<th>
 					Характеристики
 				</th>
-				
+
 				<th>
 					Статус
 				</th>
@@ -36,7 +36,7 @@
 			@foreach($products as $product)
 				<tr>
 					<td>
-						<img src="{{$product->image1}}" alt="">
+						<img src="{!! $product->image1 !!}" alt="">
 					</td>
 					<td>
 						{{$product->title}}
@@ -61,19 +61,19 @@
 					</td>
 
 
-					
+
 				</tr>
 
 			@endforeach
-			
+
 		</tbody>
 
-		
+
 	</table>
 	{{$products->links()}}
 	<style>
 		td img{
-			
+
 			height: 150px;
 			width: 100%;
 		}
@@ -82,7 +82,7 @@
 		}
 
 	</style>
-	
+
 
 <!-- Modal -->
 		<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -95,27 +95,28 @@
 		        </button>
 		      </div>
 		      <div class="modal-body">
-		        <form action="">
+		        <form action="{{route('admin.CreateProduct')}}" method="post"  enctype="multipart/form-data">
+                    {{csrf_field()}}
 		        	<label for="">Фото</label>
-		        	<input type="file" placeholder="Фото" class="form-control">
+		        	<input type="file" placeholder="Фото" name="img" class="form-control">
 		        	<br>
-		        	<input type="text" class="form-control" placeholder="Название книги">
+		        	<input type="text" name="title" class="form-control" placeholder="Название книги">
 		        	<br>
-		        	<input type="text" placeholder="Цена" class="form-control"> 
+		        	<input type="number" name="price" placeholder="Цена" class="form-control">
 		        	<br>
-		        	<select name="" class="custom-select" id="">
+		        	<select name="category" class="custom-select" id="">
 		        		@foreach($categories as $category)
 		        		<option value="{{$category->chars}}">{{$category->chars}}</option>
 		        		@endforeach
 		        	</select>
 		        	<br>
-		        	<select name="" class="custom-select" id="">
+		        	<select name="author" class="custom-select" id="">
 		        		@foreach($authors as $author)
 		        		<option value="{{$author->Name}}">{{$author->Name}}</option>
 		        		@endforeach
 		        	</select>
 		        	<br>
-		        	<textarea placeholder="Описание" class="form-control"></textarea> 
+		        	<textarea placeholder="Описание" name="description" class="form-control"></textarea>
 		        	<br>
 		        	<input type="checkbox" placeholder="" id="stock" name="stock"><label for="stock">Товар в наличии</label>
 		        	<br>
@@ -123,8 +124,8 @@
 		        </form>
 		      </div>
 		      <div class="modal-footer">
-		        
-		        
+
+
 		      </div>
 		    </div>
 		  </div>

@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateProductsTable extends Migration
+class CreateTree2sTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,18 +13,15 @@ class CreateProductsTable extends Migration
      */
     public function up()
     {
-        Schema::create('products', function (Blueprint $table) {
+        Schema::create('tree2s', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('title',100);
-            $table->string('chars',100);
-
-
-
-            $table->string('status',1);
-            $table->string('price',100);
-            $table->string('description',1000);
-
+            $table->integer('user_id')->unique();
+            $table->integer('parent_id');
+            $table->string('parents',100);
+            $table->integer('level')->default(0);
+            $table->integer('row')->default(0);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -35,6 +32,6 @@ class CreateProductsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('products');
+        Schema::dropIfExists('trees');
     }
 }

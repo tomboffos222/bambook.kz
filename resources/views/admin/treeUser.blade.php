@@ -44,7 +44,7 @@
                                 <td>Позиция на пирамиде</td>
                                 <td>{{$user->row + 1}}</td>
                             </tr>
-                            
+
                         </table>
                     </div>
                     <div class="modal-footer">

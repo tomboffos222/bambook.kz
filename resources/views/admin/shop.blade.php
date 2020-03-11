@@ -5,7 +5,7 @@
 @section('content')
 
 	<div class="flex">
-		
+
 		<button class="categoryButton">Категории</button><button class="authors">Авторы</button>
 	</div>
 
@@ -30,9 +30,9 @@
 				</tr>
 				@endforeach
 			</tbody>
-	
+
 		</table>
-		
+
 		{{$categories->links()}}
 	</div>
 	<div class="author tablet">
@@ -58,8 +58,8 @@
 
 				@foreach($authors as $author)
 				<tr>
-					
-					<td><img src="{{$author->image1}}" alt=""></td>
+
+					<td><img src="{!! $author->image1 !!}" alt=""></td>
 					<td>{{$author->Name}}</td>
 					<td>{{$author->Birth}}</td>
 					<td>{{$author->gender}}</td>
@@ -70,7 +70,7 @@
 				@endforeach
 			</tbody>
 		</table>
-		
+
 		{{$authors->links()}}
 	</div>
 	<div class="modal fade" id="category" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -87,17 +87,17 @@
 	        	<div class="">
 	        		<input type="text" name="category"class="form-control" placeholder="Ваша категория">
 
-					
+
 	        	</div>
 	        	<div class="modal-footer">
 	        		<button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
 	        		<button type="submit" class="btn btn-primary red">Добавить</button>
-	        
+
 	      		</div>
-	        	
+
 	        </form>
 	      </div>
-	      
+
 	    </div>
 	  </div>
 	</div>
@@ -105,23 +105,24 @@
 	  <div class="modal-dialog" role="document">
 	    <div class="modal-content">
 	      <div class="modal-header">
-	        <h5 class="modal-title" id="exampleModalLabel">Добавить категорию</h5>
+	        <h5 class="modal-title" id="exampleModalLabel">Добавить  автора</h5>
 	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
 	          <span aria-hidden="true">&times;</span>
 	        </button>
 	      </div>
 	      <div class="modal-body">
-	        <form action="{{route('admin.AuthorAdd')}}" method="get">
+	        <form action="{{route('admin.AuthorAdd')}}" method="post" enctype="multipart/form-data">
+                {{csrf_field()}}
 	        	<div class="">
 	        		<label for="">Фото автора</label> <br>
-	        		<input type="file" name="image" accept="image/jpeg,image/png,image/gif"> 
+	        		<input type="file" name="image" accept="image/jpeg,image/png,image/gif">
 	        	</div>
 	        	<div class="">
 	        		<label for="">Имя автора</label>
 	        		<input type="text" name="name" class="form-control" placeholder="Имя автора">
-	        		
 
-					
+
+
 	        	</div>
 	        	<div class="">
 	        		<label for="">Дата рождения</label>
@@ -149,12 +150,12 @@
 	        	<div class="modal-footer">
 	        		<button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
 	        		<button type="submit" class="btn btn-primary red">Добавить</button>
-	        
+
 	      		</div>
-	        	
+
 	        </form>
 	      </div>
-	      
+
 	    </div>
 	  </div>
 	</div>
@@ -165,7 +166,7 @@
 		}
 		td img{
 			width: 100%;
-			height: 100px;	
+			height: 100px;
 		}
 		.author td{
 			width: 15%;
@@ -192,7 +193,7 @@
 		.btn.dropdown-toggle.btn-default{
 			display: none;
 		}
-		
+
 		.flex button:hover{
 			background-color: blue;
 		}

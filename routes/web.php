@@ -8,6 +8,7 @@ Route::get('login/page','UserController@LoginPage')->name('LoginPage');
 Route::post('login','UserController@Login')->name('Login');
 Route::get('shop/{productId?}','UserController@Product')->name('Product');
 Route::get('author','UserController@Authors')->name('Authors');
+Route::get('second/tree/{userId}','UserController@SecondTree')->name('SecondTree');
 Route::get('author/{authorId?}','UserController@Author')->name('Author');
 Route::get('shop/cateogy/{categoryId?}','UserController@Category')->name('Category');
 Route::get('search/','UserController@Search')->name('Search');
@@ -21,6 +22,12 @@ Route::get('order/create','UserController@OrderCreate')->name('OrderCreate');
 Route::middleware(['userCheck'])->group(function () {
     Route::get('Main','UserController@Main')->name('Main');
     Route::get('out','UserController@Out')->name('Out');
+    Route::get('add/bot/','UserController@AddBot')->name('AddBot');
+    Route::get('bots/view/','UserController@Bots')->name('Bots');
+    Route::get('refers/','UserController@Refers')->name('Refers');
+    Route::get('orders','UserController@Orders')->name('Orders');
+    Route::get('bonuses','UserController@Bonuses')->name('Bonuses');
+    Route::get('order/view/{id?}','UserController@OrderView')->name('OrderView');
     Route::get('tree/{userId?}','UserController@Tree')->name('Tree');
     Route::get('setting/edit', 'UserController@Edit')->name('Edit');
     Route::get('setting/edit/user','UserController@EditUser')->name('EditUser');
@@ -55,7 +62,7 @@ Route::name('admin.')->prefix('admin')->middleware(['adminCheck'])->group(functi
     Route::get('product/view','AdminController@ProductView')->name('ProductView');
     Route::get('shop/view', 'AdminController@ShopView')->name('ShopView');
     Route::get('add/category','AdminController@CategoryAdd')->name('CategoryAdd');
-    Route::get('author/add','AdminController@AuthorAdd')->name('AuthorAdd');
+    Route::post('author/add','AdminController@AuthorAdd')->name('AuthorAdd');
     Route::get('message/page','AdminController@MessagePage')->name('MessagePage');
     Route::get('message/answer','AdminController@MessageAnswer')->name('MessageAnswer');
     Route::get('withdraws', 'AdminController@WithdrawShow')->name('WithdrawShow');
@@ -63,6 +70,7 @@ Route::name('admin.')->prefix('admin')->middleware(['adminCheck'])->group(functi
     Route::get('orders','AdminController@Orders')->name('Orders');
     Route::get('orders/view/{id?}','AdminController@OrdersView')->name('OrdersView');
     Route::get('withdraw/reject/{withdrawId?}', 'AdminController@WithdrawReject')->name('WithdrawReject');
+    Route::post('create/product','AdminController@CreateProduct')->name('CreateProduct');
 
 
 });

@@ -9,7 +9,7 @@
            <div class="col-lg-3">
                <div class="card text-center p-t-10 p-b-10">
 
-                   Общая сумма
+                   Общая сумма - 5% скидки
                    <h2>{{$total}}</h2>
                </div>
                <div class="card text-center p-t-10 p-b-10 m-t-10">
@@ -42,6 +42,13 @@
                            <option value="kaz_mail">Каз почта</option>
                        </select>
                    </div>
+                    <div class="">
+                        <select name="purchase" id="">
+                            <option value="deposit_balance">Депозитный счет</option>
+                            <option value="balance">Через баланс</option>
+                            <option value="smartpay">Smartpay</option>
+                        </select>
+                    </div>
                    <div class="">
                        <input type="submit" class="btn-primary btn">
                    </div>

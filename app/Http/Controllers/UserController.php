@@ -7,6 +7,8 @@ use App\Models\Tree;
 use App\Models\User;
 use App\OrderProduct;
 use App\Orders;
+use App\Tree2;
+use App\UserBalanceOperation;
 use Illuminate\Http\Request;
 use App\BlackListed;
 use App\Authors;
@@ -170,29 +172,79 @@ class UserController extends Controller
             return back()->withErrors($validator->errors());
 
         }else{
-            $user = session()->get('user');
-            $user = User::find($user['id']);
+            if ($request['withdraw_type'] == 'bill'){
+                $user = session()->get('user');
+                $user = User::find($user['id']);
 
-            $summary = $user['bill'] - $request['amount'];
-            $amount = $request['amount'];
-            if ($summary < 0) {
+                $summary = $user['bill'] - $request['amount'];
+                $amount = $request['amount'];
+                if ($summary < 0) {
 
-                return back()->withErrors('Недостаточно средств');
+                    return back()->withErrors('Недостаточно средств');
 
-                # code...
+                    # code...
+                }else{
+
+
+
+                    $data['withdraw'] = $amount;
+                    $data['summary'] = $summary;
+                    $data['user'] = $user;
+
+
+                    return view('withdrawnext',$data);
+
+                }
             }else{
+                $user = session()->get('user');
+                $user = User::find($user['id']);
 
+                $maximalWithdraw = $user['deposit_bill']*0.5;
+                if ($request['amount']>$maximalWithdraw){
+                    return back()->withErrors('Невозможно вывести больше 50% от общей суммы депозита');
+                }else{
+                    $summary = $user['deposit_bill'] - $request['amount'] - $user['deposit_bill']*0.25;
+                    $data['amount'] = $request['amount'];
+                    $data['summary'] = $summary;
+                    $data['user']  = $user;
+                    return view('withdrawnext',$data);
+                }
 
-
-                $data['withdraw'] = $amount;
-                $data['summary'] = $summary;
-                $data['user'] = $user;
-
-
-                return view('withdrawnext',$data);
 
             }
         }
+    }
+    public function OrderView($id){
+        $user = session()->get('user');
+        $data['user'] = User::find($user['id']);
+        $data['order'] = Orders::find($id)->first();
+        $data['products'] = Product::join('order_products','products.id','=','order_products.productId')->select('products.*','quantity','orderId')->where('orderId',$id)->paginate(12);
+
+        return view('orderview',$data);
+    }
+    public function Bots(){
+        $user = session()->get('user');
+        $data['user'] = User::find($user['id']);
+        $data['bots'] = User::where('bot_owner_id',$user['id'])->paginate(12);
+        return view('bots',$data);
+    }
+    public function Bonuses(){
+        $user = session()->get('user');
+        $data['user'] = User::find($user['id']);
+        $data['bonuses'] = UserBalanceOperation::where('user_id',$user['id'])->paginate(12);
+        return view('bonuses',$data);
+    }
+    public function Orders(){
+        $user = session()->get('user');
+        $data['user']  =  User::find($user['id']);
+        $data['orders'] = Orders::where('user_id',$user['id'])->paginate(12);
+        return view('orders',$data);
+    }
+    public function Refers(){
+        $user = session()->get('user');
+        $data['user'] = User::find($user['id']);
+        $data['refers'] = User::where('referBy',$user['id'])->paginate(12);
+        return view('refers',$data);
     }
     public function DeleteAll(){
 
@@ -220,10 +272,10 @@ class UserController extends Controller
                 return back()->withErrors($validator->errors());
             } else {
 
-                $data['total'] = $request['total'];
+
 
                 $data['quantity'] = $request['quantity'];
-                $data['total'] = $request['total'];
+                $data['total'] = $request['total'] * 0.95;
 
 
             }
@@ -262,9 +314,10 @@ class UserController extends Controller
                 $order['region'] = $request['region'];
                 $order['city'] = $request['city'];
                 $order['type_of_order'] = $request['type_of_order'];
-
+                $order['status'] = 'waiting';
                 $order->save();
                 $user = session()->get('user');
+                $user = User::find($user['id']);
                 $products = Product::join('baskets', 'products.id', '=', 'baskets.products')->select('products.*', 'quantity', 'total', 'user_id')->where('user_id', $user['id'])->get();
                 foreach ($products as $product) {
                     $orderProducts = new OrderProduct;
@@ -273,7 +326,36 @@ class UserController extends Controller
                     $orderProducts['quantity'] = $product['quantity'];
                     $orderProducts->save();
                 }
-                return back()->with('message', 'Ваш заказ оформлен');
+                if($request['purchase'] == 'deposit_balance'){
+                    $sum = $user['deposit_bill'] - $order['total'];
+                    if($sum <0){
+                        $order['status'] = 'fail';
+                        $order->save();
+                        return back()->withErrors('У вас недостаточно средств');
+                    }else{
+                        $order['status'] = 'success';
+                        $order->save();
+                        $user['deposit_bill'] = $sum;
+                        $user->save();
+                        return back()->with('message','Успешно оплачено');
+                    }
+                }elseif($request['purchase'] == 'balance'){
+                    $sum = $user['bill'] - $order['total'];
+                    if($sum <0){
+                        $order['status'] = 'fail';
+                        $order->save();
+                        return back()->withErrors('У вас недостаточно средств');
+                    }else{
+                        $order['status'] = 'success';
+                        $order->save();
+                        $user['bill'] = $sum;
+                        $user->save();
+                        return back()->with('message','Успешно оплачено');
+                    }
+                }else{
+
+                }
+
             }
         }
 
@@ -311,12 +393,13 @@ class UserController extends Controller
         $data['user'] = User::find($user['id']);
         return view('up',$data);
     }
+
     public function AccountUp(){
         $user= session()->get('user');
 
         $user = User::find($user['id']);
 
-        $user['bill'] = $user['bill'] - 20000;
+        //$user['bill'] = $user['bill'] - 20000;
 
         if ($user['bill'] < 0 ) {
 
@@ -326,6 +409,7 @@ class UserController extends Controller
             $user['status'] = 'partner';
 
             $user->save();
+            $this->AddUserToMatrix($user->id);
 
             return back()->with('message','Оплачено, ваш статус: партнер');
 
@@ -334,6 +418,424 @@ class UserController extends Controller
 
 
     }
+    function AddReferToMatrix($user_id,$refer_id,$type){
+        if ( Tree::whereUserId($user_id)->exists()){
+            return back()->withErrors('Уже зарегистрирован');
+        }
+
+        if($type == 1) {
+            $parentUser = Tree::where('user_id', $refer_id)->first();
+            $childUsers = Tree::where('parent_id', $refer_id)->get();
+            $lastChild = Tree::where('parent_id', $refer_id)->orderBy('id', 'desc')->first();
+            $neighbours = Tree::where('parent_id', $lastChild->parent_id)->get();
+            if (count($neighbours) < 2) {
+                $new = new Tree();
+                $new->user_id = $user_id;
+                $new->parent_id = $lastChild->parent_id;
+                $new->parents = $lastChild->parents;
+                $new->row = $parentUser->row + 1;
+                $new->save();
+                $this->Giver($new);
+            } else {
+                $childs = Tree::where('parents', 'LIKE', '%' . $refer_id . '%')->get();
+                foreach ($childs as $child) {
+                    $childKids = Tree::where('parent_id', $child['id'])->count();
+                    if ($childKids < 2) {
+                        $childKid = Tree::where('parent_id', $child['id'])->first();
+                        if ($childKid) {
+                            $new = new Tree();
+                            $new->user_id = $user_id;
+                            $new->parent_id = $childKid->parent_id;
+                            $new->parents = $childKid->parents;
+                            $new->row = $childKid->row;
+                            $new->save();
+                            $this->Giver($new);
+                        } else {
+                            $new = new Tree();
+                            $new->user_id = $user_id;
+                            $new->parent_id = $child->id;
+                            $new->parents = $child->parents . ',' . $child->id;
+                            $new->row = $child->row + 1;
+                            $new->save();
+                            $this->Giver($new);
+
+                        }
+                        break;
+                    }
+                }
+
+
+            }
+        }elseif($type==2){
+            $parentUser = Tree2::where('user_id',$refer_id)->first();
+            $childUsers  =Tree2::where('parent_id',$refer_id)->get();
+            $lastChild = Tree2::where('parent_id',$refer_id)->orderBy('id','desc')->first();
+            $neighbours = Tree2::where('parent_id',$lastChild->parent_id)->get();
+            if (count($neighbours)<2){
+                $new = new Tree2();
+                $new->user_id = $user_id;
+                $new->parent_id = $lastChild->parent_id;
+                $new->parents = $lastChild->parents;
+                $new->row = $parentUser->row + 1;
+                $new->save();
+                $this->SecondGiver($new);
+            }else {
+                $childs = Tree2::where('parents', 'LIKE', '%' . $refer_id . '%')->get();
+                foreach ($childs as $child) {
+                    $childKids = Tree2::where('parent_id', $child['id'])->count();
+                    if ($childKids < 2) {
+                        $childKid = Tree::where('parent_id', $child['id'])->first();
+                        if ($childKid) {
+                            $new = new Tree2();
+                            $new->user_id = $user_id;
+                            $new->parent_id = $childKid->parent_id;
+                            $new->parents = $childKid->parents;
+                            $new->row = $childKid->row;
+                            $new->save();
+                            $this->SecondGiver($new);
+                        } else {
+                            $new = new Tree2();
+                            $new->user_id = $user_id;
+                            $new->parent_id = $child->id;
+                            $new->parents = $child->parents . ',' . $child->id;
+                            $new->row = $child->row + 1;
+                            $new->save();
+                            $this->SecondGiver($new);
+
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+
+
+
+    }
+    function AddUserToMatrix($user_id){
+        if (Tree::whereUserId($user_id)->exists()){
+            return back()->withErrors('Уже зарегистрированы');
+        }
+
+        $lastUser = Tree::orderBy('id','desc')->first();
+
+
+        $neighbours =  Tree::where('parent_id',$lastUser->parent_id)->get();
+        if (count($neighbours) < 2){
+            $parentUser  = Tree::where('id',$lastUser->parent_id)->first();
+
+            $new = new Tree();
+            $new->user_id = $user_id;
+            $new->parent_id = $lastUser->parent_id;
+            $new->parents = $lastUser->parents;
+            $new->row = $parentUser->row + 1;
+            $new->save();
+            $this->Giver($new);
+
+        } else{
+            $parentUser = Tree::where('id',$lastUser->parent_id)->first();
+            $nextUser = Tree::where('row',$parentUser->row)->where('id','>',$parentUser->id)->first();
+            if ($nextUser){
+                $new = new Tree();
+                $new->user_id = $user_id;
+                $new->parent_id = $nextUser->id;
+                $new->parents = $nextUser->parents.','.$nextUser->id;
+                $new->row = $nextUser->row + 1;
+                $new->save();
+                $this->Giver($new);
+            }else{
+                $nextUser = Tree::where('row',$lastUser->row)->first();
+                $new = new Tree();
+                $new->user_id = $user_id;
+                $new->parent_id = $nextUser->id;
+                $new->parent_id = $nextUser->id;
+                $new->parents = $nextUser->parents.','.$nextUser->id;
+                $new->row = $nextUser->row + 1;
+
+                $new->save();
+                $this->Giver($new);
+            }
+
+
+        }
+
+
+    }
+    protected  function Giver($new){
+        $parents = explode(',',$new->parents);
+
+        $parents = array_reverse($parents);
+        if (!empty($parents[0])){
+            $user = Tree::where('parents','LIKE','%'.$parents[0].'%')->where('row',$new->row)->get();
+            if(!empty($user[1])) {
+                $user2 = $user[1];
+
+                if ($new['user_id'] == $user2['user_id']) {
+                    $parentAccount = User::where('id', $parents[0])->first();
+
+                    $parentAccount['bill'] += 5000;
+                    $parentAccount->save();
+                    $ubo = new UserBalanceOperation();
+                    $ubo['user_id'] = $parentAccount['id'];
+                    $ubo['desc'] = 'Получение бонуса за 1 ряд';
+                    $ubo['sum'] = 5000;
+                    $ubo->save();
+
+                }
+            }
+        }
+        if (!empty($parents[1])){
+            $user = Tree::where('parents','LIKE','%'.$parents[1].'%')->where('row',$new->row)->get();
+            if(!empty($user[5])) {
+                $user4 = $user[3];
+
+                if ($new['user_id'] == $user4['user_id']) {
+                    $parentAccount = User::where('id', $parents[1])->first();
+                    $parentAccount['bill'] += 10000;
+                    $parentAccount->save();
+                    $ubo = new UserBalanceOperation();
+                    $ubo['user_id'] = $parentAccount['id'];
+                    $ubo['desc'] = 'Получение бонуса за 2 ряд';
+                    $ubo['sum'] = 10000;
+                    $ubo->save();
+
+                }
+            }
+        }
+        if (!empty($parents[2])){
+            $user = Tree::where('parents','LIKE','%'.$parents[2].'%')->where('row',$new->row)->get();
+            if(!empty($user[13])) {
+                $user8 = $user[7];
+
+                if ($new['user_id'] == $user8['user_id']) {
+                    $parentAccount = User::where('id', $parents[2])->first();
+                    $parentAccount['bill'] += 20000;
+                    $parentAccount->save();
+                    $ubo = new UserBalanceOperation();
+                    $ubo['user_id'] = $parentAccount['id'];
+                    $ubo['desc'] = 'Получение бонуса за 3 ряд';
+                    $ubo['sum'] = 20000;
+                    $ubo->save();
+
+                }
+            }
+        }
+        if (!empty($parents[3])){
+            $user = Tree::where('parents','LIKE','%'.$parents[3].'%')->where('row',$new->row)->get();
+            if(!empty($user[15])) {
+                $user16 = $user[15];
+
+                if ($new['user_id'] == $user16['user_id']) {
+                    $parentAccount = User::where('id', $parents[3])->first();
+                    $parentAccount['bill'] += 40000;
+                    $parentAccount->save();
+                    $ubo = new UserBalanceOperation();
+                    $ubo['user_id'] = $parentAccount['id'];
+                    $ubo['desc'] = 'Получение бонуса за 4 ряд';
+                    $ubo['sum'] = 40000;
+                    $ubo->save();
+                }
+            }
+        }
+        if (!empty($parents[4])){
+            $user = Tree::where('parents','LIKE','%'.$parents[4].'%')->where('row',$new->row)->get();
+            if(!empty($user[15])) {
+
+                $user32 = $user[15];
+
+                if ($new['user_id'] == $user32['user_id']) {
+                    $parentAccount = User::where('id', $parents[4])->first();
+                    $parentAccount['bill'] += 50000;
+
+                    $parentAccount->save();
+                    $ubo = new UserBalanceOperation();
+                    $ubo['user_id'] = $parentAccount['id'];
+                    $ubo['desc'] = 'Получение бонуса за 5 ряд';
+                    $ubo['sum'] = 100000;
+                    $ubo->save();
+
+                    $uboNew = new UserBalanceOperation();
+                    $uboNew['user_id'] = $parentAccount['id'];
+                    $uboNew['desc'] = 'Оплата за второй этап';
+                    $uboNew['sum'] = 50000;
+                    $uboNew->save();
+                }
+            }
+        }
+
+    }
+    function AddUserToSecondMatrix($user_id){
+        if (Tree2::whereUserId($user_id)->exists()){
+            return back()->withErrors('Уже зарегистрированы');
+        }
+
+        $lastUser = Tree2::orderBy('id','desc')->first();
+
+
+        $neighbours =  Tree2::where('parent_id',$lastUser->parent_id)->get();
+        if (count($neighbours) < 2){
+            $parentUser  = Tree2::where('id',$lastUser->parent_id)->first();
+
+            $new = new Tree2();
+            $new->user_id = $user_id;
+            $new->parent_id = $lastUser->parent_id;
+            $new->parents = $lastUser->parents;
+            $new->row = $parentUser->row + 1;
+            $new->save();
+            $this->SecondGiver($new);
+
+        } else{
+            $parentUser = Tree2::where('id',$lastUser->parent_id)->first();
+            $nextUser = Tree2::where('row',$parentUser->row)->where('id','>',$parentUser->id)->first();
+            if ($nextUser){
+                $new = new Tree2();
+                $new->user_id = $user_id;
+                $new->parent_id = $nextUser->id;
+                $new->parents = $nextUser->parents.','.$nextUser->id;
+                $new->row = $nextUser->row + 1;
+                $new->save();
+                $this->SecondGiver($new);
+            }else{
+                $nextUser = Tree2::where('row',$lastUser->row)->first();
+                $new = new Tree2();
+                $new->user_id = $user_id;
+                $new->parent_id = $nextUser->id;
+                $new->parent_id = $nextUser->id;
+                $new->parents = $nextUser->parents.','.$nextUser->id;
+                $new->row = $nextUser->row + 1;
+
+                $new->save();
+                $this->SecondGiver($new);
+            }
+
+
+        }
+
+
+    }
+    protected  function SecondGiver($new){
+        $parents = explode(',',$new->parents);
+
+        $parents = array_reverse($parents);
+        if (!empty($parents[0])){
+            $user = Tree2::where('parents','LIKE','%'.$parents[0].'%')->where('row',$new->row)->get();
+            if(!empty($user[1])) {
+                $user2 = $user[1];
+
+                if ($new['user_id'] == $user2['user_id']) {
+                    if ($new['bot_owner_id'] ==  null) {
+                        $parentAccount = User::where('id', $parents[0])->first();
+                        $parentAccount['bill'] += 10000;
+                        $parentAccount->save();
+                        $ubo = new UserBalanceOperation();
+                        $ubo['user_id'] = $parentAccount['id'];
+                        $ubo['desc'] = 'Получение бонуса за второй этап 1 ряд';
+                        $ubo['sum'] = 10000;
+                        $ubo->save();
+                    }
+
+
+                }
+            }
+        }
+        if (!empty($parents[1])){
+            $user = Tree2::where('parents','LIKE','%'.$parents[1].'%')->where('row',$new->row)->get();
+            if(!empty($user[3])) {
+                $user4 = $user[3];
+
+                if ($new['user_id'] == $user4['user_id']) {
+                    if($new['bot_owner_id'] == null) {
+                        $parentAccount = User::where('id', $parents[1])->first();
+                        $parentAccount['bill'] += 20000;
+                        $parentAccount->save();
+                        $ubo = new UserBalanceOperation();
+                        $ubo['user_id'] = $parentAccount['id'];
+                        $ubo['desc'] = 'Получение бонуса за второй этап 2  ряд';
+                        $ubo['sum'] = 20000;
+                        $ubo->save();
+                    }
+
+
+                }
+            }
+        }
+        if (!empty($parents[2])){
+            $user = Tree2::where('parents','LIKE','%'.$parents[2].'%')->where('row',$new->row)->get();
+            if(!empty($user[7])) {
+                $user8 = $user[7];
+
+                if ($new['user_id'] == $user8['user_id']) {
+                    if($new['bot_owner_id'] == null) {
+                        $parentAccount = User::where('id', $parents[2])->first();
+                        $parentAccount['bill'] += 40000;
+                        $parentAccount->save();
+                        $ubo = new UserBalanceOperation();
+                        $ubo['user_id'] = $parentAccount['id'];
+                        $ubo['desc'] = 'Получение бонуса за второй этап 3 ряд';
+                        $ubo['sum'] = 40000;
+
+                        $ubo->save();
+                    }
+
+
+                }
+            }
+        }
+        if (!empty($parents[3])){
+            $user = Tree2::where('parents','LIKE','%'.$parents[3].'%')->where('row',$new->row)->get();
+            if(!empty($user[15])) {
+                $user16 = $user[15];
+
+                if ($new['user_id'] == $user16['user_id']) {
+                    if($new['bot_owner_id'] == null) {
+                        $parentAccount = User::where('id', $parents[3])->first();
+                        $parentAccount['bill'] += 80000;
+                        $parentAccount->save();
+                        $ubo = new UserBalanceOperation();
+                        $ubo['user_id'] = $parentAccount['id'];
+                        $ubo['desc'] = 'Получение бонуса за второй этап 4 ряд';
+                        $ubo['sum'] = 80000;
+                        $ubo->save();
+                    }elseif($new['bot_owner_id'] != null){
+                        $parentAccount = User::where('id',$new['bot_owner_id'])->first();
+                        $parentAccount['deposit_bill'] +=100000;
+                        $parentAccount->save();
+                        $ubo = new UserBalanceOperation();
+                        $ubo['user_id'] = $parentAccount['id'];
+                        $ubo['desc'] = 'Получение бонуса за второй этап 4 ряд бота'.$new['name'];
+                        $ubo['sum'] = 100000;
+                        $ubo->save();
+                    }
+
+
+                }
+            }
+        }
+        if (!empty($parents[4])){
+            $user = Tree2::where('parents','LIKE','%'.$parents[4].'%')->where('row',$new->row)->get();
+            if(!empty($user[31])) {
+                $user32 = $user[31];
+
+                if ($new['user_id'] == $user32['user_id']) {
+                    $parentAccount = User::where('id', $parents[4])->first();
+                    $parentAccount['bill'] += 200000;
+
+                    $parentAccount->save();
+                    $ubo = new UserBalanceOperation();
+                    $ubo['user_id'] = $parentAccount['id'];
+                    $ubo['desc'] = 'Получение бонуса за второй этап 5 ряд';
+                    $ubo['sum'] = 200000;
+                    $ubo->save();
+
+
+
+                }
+            }
+        }
+
+    }
+
     public function Home(){
 
         $data['products'] = Product::orderBy('id','desc')->paginate(12);
@@ -410,6 +912,7 @@ class UserController extends Controller
 
 
     }
+
     public function Product($productId){
         $products = Product::where('id','!=',$productId)->get();
         $product = Product::find($productId);
@@ -475,17 +978,34 @@ class UserController extends Controller
 
             $user = new User;
 
-
+            $user['status'] = 'registered';
             $user['login'] = 000000+$lastuser['id']+1;
             $user['password'] = $request['password'];
 
             $user['zhsn'] = $request['zhsn'];
             $user['phone'] = $request['phone'];
             $user['email'] = $request['email'];
-            $user['status'] = 'registered';
+            $user['status'] = 'partner';
             $user['name']  =$request['name'];
+            $user['referBy'] = $request['referBy'];
             $user['bill'] = 0;
+
             $user->save();
+            if ($request['referBy'] != null){
+                $count = User::where('referBy',$request['referBy'])->count();
+
+                if ($count>=3){
+                    return back()->withErrors('Вся ячейки для приглашения заняты');
+
+                }
+            }
+            if ($request['referBy'] == null){
+                $this->AddUserToMatrix($user->id);
+            }elseif($request['referBy'] != null){
+                $this->AddReferToMatrix($user['id'],$request['referBy'],1);
+            }
+
+
             return redirect()->route('Home')->with('message','Ваш запрос отправлен! Ваш логин:'.$user['login']);
         }
     }
@@ -615,26 +1135,137 @@ class UserController extends Controller
     public function Out(Request $request){
         session()->forget('user');
         return redirect()->route('LoginPage')->withErrors('Вы вышли');
+
     }
 
     public function Main(){
-        $data['user'] = session()->get('user');
+        $user = session()->get('user');
+        $data['user'] = User::find($user['id']);
+        $data['referBy'] = User::where('referBy',$user['id'])->count();
+        $data['botCount'] = User::where('bot_owner_id',$user['id'])->count();
 
 
         $data['tree'] = Tree::whereUserId($data['user']->id)->first();
 
         return view('main',$data);
     }
+    public function AddBot(Request $request){
+        $rules = [
+          'password' => 'required',
 
-    public function Tree($userId = null){
+        ];
+        $messages = [
+          'password.required' => 'Введите пароль'
+        ];
+        $validator = $this->validator($request->all(),$rules,$messages);
+        if ($validator->fails()){
+            return back()->withErrors($validator->errors());
+        }else{
+            $users = Tree2::where('parents','LIKE','%'.$request['user_id'].'%')->get();
+            $bots = User::where('bot_owner_id',$request['user_id'])->count();
+            if($bots == 0){
+
+                if(!empty($users[5])){
+                    $user = User::where('id',$request['user_id'])->first();
+                    $lastUser = User::orderBy('id','desc')->first();
+                    $bot = new User();
+                    $bot['status'] = 'partner';
+                    $bot['name'] = $user['login'].'_bot_'.($lastUser['id']+1);
+                    $bot['login'] = 00000+$lastUser['id']+1;
+                    $bot['zhsn'] = $user['zhsn'];
+                    $bot['phone'] = $user['phone'];
+                    $bot['bill'] = 0;
+                    $bot['password'] = $request['password'];
+                    $bot['bot_owner_id'] = $request['user_id'];
+                    $bot->save();
+                    $this->AddReferToMatrix($bot['id'],$user['id'],2);
+                }else{
+
+                    return back()->withErrors('Бот будет доступен на 3 ряду');
+                }
+            }
+            elseif ($bots ==1){
+                if(!empty($users[13])){
+                    $user = User::where('id',$request['user_id'])->first();
+                    $lastUser = User::orderBy('id','desc')->first();
+                    $bot = new User();
+                    $bot['status'] = 'partner';
+                    $bot['name'] = $user['login'].'_bot_'.($lastUser['id']+1);
+                    $bot['login'] = 00000+$lastUser['id']+1;
+                    $bot['zhsn'] = $user['zhsn'];
+                    $bot['phone'] = $user['phone'];
+                    $bot['bill'] = 0;
+                    $bot['password'] = $request['password'];
+                    $bot['bot_owner_id'] = $request['user_id'];
+                    $bot->save();
+                    $this->AddReferToMatrix($bot['id'],$user['id'],2);
+                }else{
+
+                    return back()->withErrors('Бот будет доступен на 3 ряду');
+                }
+            }
+            elseif ($bots ==2){
+                if(!empty($users[20])){
+                    $user = User::where('id',$request['user_id'])->first();
+                    $lastUser = User::orderBy('id','desc')->first();
+                    $bot = new User();
+                    $bot['status'] = 'partner';
+                    $bot['name'] = $user['login'].'_bot_'.($lastUser['id']+1);
+                    $bot['login'] = 00000+$lastUser['id']+1;
+                    $bot['zhsn'] = $user['zhsn'];
+                    $bot['phone'] = $user['phone'];
+                    $bot['bill'] = 0;
+                    $bot['password'] = $request['password'];
+                    $bot['bot_owner_id'] = $request['user_id'];
+                    $bot->save();
+                    $this->AddReferToMatrix($bot['id'],$user['id'],2);
+                }else{
+
+                    return back()->withErrors('Бот будет доступен на 3 ряду');
+                }
+            }elseif($bots==4){
+                return back()->withErrors('Максимальное количество ботов 4');
+            }
+        }
+    }
+    public function SecondTree($userId){
+
+        $user = Tree2::join('users','users.id','tree2s.user_id')->
+            select('tree2s.*','name','phone','login','email')->where('user_id',$userId)->first();
+
+        $data['user'] = $user;
+        $data['secondTree'] = 1;
+
+
+
+        return view('tree',$data);
+
+    }
+    public function Tree($userId){
+
         $user = Tree::join('users','users.id','tree.user_id')
-            ->select('tree.*','name','phone','login','email');
+            ->select('tree.*','name','phone','login','email')->where('user_id',$userId)->first();
+        $data['user'] = $user;
+
+
+
+
         if ($userId){
-            $user = $user->find($userId);
+
+            $childUsers = Tree::where('parents','LIKE','%'.$user['id'].'%')->get();
+
+            if (!empty($childUsers[61])){
+                $data['exception'] = 1;
+            }else{
+                $data['exception'] = 0;
+            }
+
+
+
         }else{
             $user = $user->first();
         }
-        return view('tree',['user'=>$user]);
+        return view('tree',$data);
     }
 
 }

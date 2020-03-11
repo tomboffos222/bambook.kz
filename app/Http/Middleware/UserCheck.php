@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 
 class UserCheck
+
 {
     /**
      * Handle an incoming request.

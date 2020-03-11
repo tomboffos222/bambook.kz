@@ -7,8 +7,8 @@
            <form class="col-md-4 col-md-offset-4" action="{{route("Register")}}" method="post">
                <h2>Регистрация</h2>
                {{csrf_field()}}
-              
-               
+
+
                 <div class="form-group">
                    <label for="password">Введите ваш Пароль</label>
                    <input class="form-control" placeholder="" type="password" required id="password" name="password">
@@ -16,6 +16,10 @@
                <div class="form-group">
                    <label for="name">Введите ваше ФИО</label>
                    <input class="form-control" placeholder="Например Кайрат Нуртас" type="text" required id="name" name="name">
+               </div>
+               <div class="for-group">
+                   <label for="" class="">ID консультанта</label>
+                   <input type="number"  name="referBy" class="form-control">
                </div>
                <div class="form-group">
                  <label for="zhsn">Введите ИИН</label>
@@ -29,7 +33,7 @@
                    <label for="phone">Введите ваш Телефон номер</label>
                    <input class="form-control" type="number" required id="phone" name="phone">
                </div>
-               
+
                <div>
                     <button class="btn btn-primary">Отправить</button>
                </div>

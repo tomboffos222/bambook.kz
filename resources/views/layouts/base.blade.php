@@ -53,7 +53,7 @@
                     <ul>
                         <li><a href="{{route('Home')}}">Главная</a></li>
                         <li><a href="/shop">Магазин</a></li>
-                        <li><a href="">Блог</a></li>
+
 
                         <li><a href="{{route('Authors')}}">Авторы</a></li>
                         <li><a href="">Контакты</a></li>

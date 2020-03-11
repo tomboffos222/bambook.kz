@@ -4,9 +4,10 @@
 @section('content')
 
 	<div class="">
-		<div class="col-lg-3">
+		<div class="col-lg-4">
 
-			<h4>Ваш баланс : {{$user->bill}} KZT</h4>
+			<h4>Ваш баланс : {{$user->bill}} KZT  </h4>
+            <h4>Ваш депозитный счет : {{$user->deposit_bill}} KZT</h4>
 			<h3>
 			История вывода
 
@@ -29,6 +30,10 @@
 		      <div class="modal-body">
 		        <form action="{{route('WithdrawCreate')}}" method="get">
 		        	<input type="hidden" name="user_id" value="{{$user->id}}">
+                    <select name="withdraw_type" id="">
+                        <option value="deposit">Депозитный счет</option>
+                        <option value="bill">Баланс</option>
+                    </select>
 		        	<input class="form-control" style="margin-bottom: 20px;" name="amount" placeholder="Сумма вывода" type="number"><input type="submit" class="btn btn-primary">
 		        </form>
 		      </div>
