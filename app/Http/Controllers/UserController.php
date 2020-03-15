@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Basket;
+use App\Basket_product;
+use App\Discount;
 use App\Models\Tree;
 use App\Models\User;
 use App\OrderProduct;
 use App\Orders;
+use App\Payment;
 use App\Tree2;
 use App\UserBalanceOperation;
 use Illuminate\Http\Request;
@@ -36,47 +39,65 @@ class UserController extends Controller
             return back()->withErrors($validator->errors());
 
         }else{
-            $user = session()->get('user');
-            if ($user ==null){
-                return back()->withErrors('Войдите в систему чтобы пользоваться корзиной');
-            }else {
+
+
                 $request['product_id'] = intval($request['product_id']);
-                $request['user_id'] = intval($request['user_id']);
-                $basket = Basket::where([
-                    ['user_id', '=', $user['id']],
-                    ['products', '=', $request['product_id']],
-                ])->first();
+
+                $basket = session()->get('basket');
+
+
 
                 if (!$basket) {
 
                     $basket = new Basket;
 
                     $basket['quantity'] = 1;
-                    $basket['user_id'] = $user['id'];
-                    $basket['products'] = $request['product_id'];
+
                     $product = Product::find($request['product_id']);
 
                     $basket['total'] = $basket['quantity'] * $product['price'];
                     $basket->save();
+                    $basketProduct = new Basket_product();
+                    $basketProduct['product_id'] =  $product['id'];
+                    $basketProduct['quantity'] +=1;
+                    $basketProduct['basket_id'] = $basket['id'];
+                    $basketProduct->save();
+                    session()->put('basket',$basket);
+                    session()->save();
+
 
                 } else {
+                    $basket = session()->get('basket');
                     $basket['quantity'] += 1;
                     $product = Product::find($request['product_id']);
-                    $basket['total'] = $basket['quantity'] * $product['price'];
+                    $basket['total'] += $product['price'];
 
 
                     $basket->save();
+                    $basket_product = Basket_product::where('basket_id',$basket['id'])->where('product_id',$product['id'])->first();
+                    if (!$basket_product){
+                        $basket_product = new Basket_product();
+                        $basket_product['quantity'] +=1;
+                        $basket_product['product_id'] = $product['id'];
+                        $basket_product['basket_id']  = $basket['id'];
+                        $basket_product->save();
+
+                    }else{
+                        $basket_product = Basket_product::where('basket_id',$basket['id'])->where('product_id',$product['id'])->first();
+                        $basket_product['quantity'] +=1;
+                        $basket_product->save();
+                    }
+
+
+                    session()->put('basket',$basket);
+                    session()->save();
+
 
 
                 }
-                $baskets = Basket::where('user_id', $request['user_id'])->get();
-                $mainCount = 0;
-                foreach ($baskets as $basket) {
-                    $mainCount = $mainCount + $basket['quantity'];
-                }
-                session()->put('count', $mainCount);
-                return back()->with('message', 'Добавлено в корзину');
-            }
+                $baskets = Basket_product::where('basket_id', $basket['id'])->get();
+                return back()->withErrors( 'Добавлено в корзину');
+
 
 
         }
@@ -114,13 +135,13 @@ class UserController extends Controller
     }
     public function DeleteProduct(Request $request){
         $rules = [
-            'user_id' => 'required|max:255',
+
             'product_id' => 'required|max:255'
         ];
         $messages = [
             "user_id.required" => "Войдите чтобы добавить в корзину",
             "product_id.required" => "Введите название книги или имя автора",
-            "user_id.max"=>"Максимальное количество символов 255"
+
         ];
         $validator = $this->validator($request->all(),$rules, $messages);
 
@@ -129,12 +150,19 @@ class UserController extends Controller
 
         }else{
             $request['product_id'] = intval($request['product_id']);
-            $request['user_id'] = intval($request['user_id']);
-            $basket = Basket::where([
-                ['user_id', '=', $request['user_id']],
-                ['products', '=', $request['product_id']],
-            ])->first();
-            $basket->delete();
+
+            $basket = session()->get('basket');
+            $basket = Basket::find($basket['id']);
+            $product = Basket_product::where('basket_id',$basket['id'])->where('product_id',$request['product_id'])->first();
+            $products = Product::where('id',$product['product_id'])->first();
+
+            $sum = $products['price'] *$product['quantity'];
+
+            $product->delete();
+            $basket['quantity'] -= $product['quantity'];
+            $basket['total'] -=$sum;
+            $basket->save();
+
 
 
 
@@ -248,16 +276,13 @@ class UserController extends Controller
     }
     public function DeleteAll(){
 
-        $user = session()->get('user');
-        $basket = Basket::where('user_id',$user['id'])->delete();
-        return redirect()->route('Home')->with('message','Все удалено с корзины');
+        $basket = session()->get('basket');
+        $basket = Basket::where('id',$basket['id'])->delete();
+        session()->forget('basket');
+        return redirect()->route('Home')->withErrors('Все удалено с корзины');
     }
     public function OrderForm(Request $request){
-        $user = session()->get('user');
 
-        if($user == null) {
-            return back()->withErrors('Войдите чтобы воспользоваться корзиной');
-        }else {
             $rules = [
 
                 'quantity' => 'required|max:255',
@@ -275,12 +300,17 @@ class UserController extends Controller
 
 
                 $data['quantity'] = $request['quantity'];
-                $data['total'] = $request['total'] * 0.95;
+                $user = session()->get('user');
+                if($user['status'] == 'partner') {
+                    $data['total'] = $request['total'] * 0.95;
+                }else{
+                    $data['total'] = $request['total'];
+                }
 
 
             }
             return view('order', $data);
-        }
+
     }
     public function OrderCreate(Request $request){
         $rules = [
@@ -301,11 +331,10 @@ class UserController extends Controller
             return back()->withErrors($validator->errors());
         }else {
             $user = session()->get('user');
-            if ($user == null) {
-                return back()->withErrors('message', 'Войдите чтобы воспользоваться корзиной');
-            } else {
+            $basket = session()->get('basket');
+
                 $order = new Orders;
-                $order['user_id'] = $user['id'];
+
                 $order['quantity'] = $request['quantity'];
                 $order['total'] = $request['total'];
                 $order['index'] = $request['index'];
@@ -318,7 +347,7 @@ class UserController extends Controller
                 $order->save();
                 $user = session()->get('user');
                 $user = User::find($user['id']);
-                $products = Product::join('baskets', 'products.id', '=', 'baskets.products')->select('products.*', 'quantity', 'total', 'user_id')->where('user_id', $user['id'])->get();
+                $products = Product::join('basket_products', 'products.id', '=', 'basket_products.product_id')->select('products.*', 'quantity')->where('basket_id',$basket['id'])->get();
                 foreach ($products as $product) {
                     $orderProducts = new OrderProduct;
                     $orderProducts['orderId'] = $order['id'];
@@ -354,33 +383,159 @@ class UserController extends Controller
                     }
                 }else{
 
+                    $payment = new Payment();
+                    $payment['order_id'] = $order['id'];
+                    $payment['description'] = 'Покупка продуктов заказ номер: ' .$order['id'];
+                    $payment->save();
+                    $data['MERCHANT_ID'] = 17274;
+                    $data['PAYMENT_AMOUNT'] = $order['total'];
+                    $data['PAYMENT_ORDER_ID'] = $payment['id'];
+                    $data['PAYMENT_INFO'] = 'Покупка продуктов'.$payment['id'];
+                    $data['PAYMENT_RETURN_URL'] = route('SuccessPayment');
+                    $data['PAYMENT_RETURN_FAIL_URL'] = route('FailPayment');
+                    $data['PAYMENT_CALLBACK_URL'] = route('PaymentResult');
+                    ksort($data);
+                    $str = '';
+                    foreach ($data as $d){
+                        $str .= $d;
+                    }
+                    $secret_key = 'f4f84866-5dd3-11ea-98a5-448a5bd44871';
+                    $signature = base64_encode(pack("H*", md5($str.$secret_key)));//
+                    $data['PAYMENT_HASH'] =$signature;
+
+
+                    $res = self::SendReq('https://spos.kz/merchant/api/create_invoice',$data);
+                    if ($res->status == 0){
+
+                        return redirect($res->data->url);
+                    }else{
+                        return redirect()->back();
+                    }
+
+
                 }
 
+
+        }
+
+    }
+    public function SuccessPayment(){
+        return redirect()->route('Home')->with('message','Платеж прошел успешно');
+    }
+    public function FailPayment(){
+        return redirect()->route('Home')->withErrors('Платеж не получился');
+    }
+    private static function SendReq($url,$params) {
+        // Set POST variables
+
+        $headers = array(
+
+            'Content-Type: application/json'
+        );
+        // Open connection
+        $ch = curl_init();
+
+        // Set the url, number of POST vars, POST data
+        curl_setopt($ch, CURLOPT_URL, $url);
+
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        // Disabling SSL Certificate support temporarly
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params));
+
+        // Execute post
+        $result = curl_exec($ch);
+        // echo "Result".$result;
+        if ($result === FALSE) {
+            die('Curl failed: ' . curl_error($ch));
+        }
+
+        // Close connection
+        curl_close($ch);
+
+        return json_decode($result);
+    }
+    public function AccountPaymentResult(Request $request){
+        Storage::put('pay.log',$request->all());
+        $payment = Payment::find($request['PAYMENT_ORDER_ID']);
+        $user =  User::find($payment['user_id']);
+        if ($request['PAYMENT_RESULT'] == 'paid'){
+            $user['status'] = 'partner';
+            $user->save();
+            $payment['status'] = 'ok';
+            $payment->save();
+            if ($user['referBy'] == null){
+                $this->AddUserToMatrix($user['id']);
+            }elseif($user['referBy'] != null){
+                $this->AddReferToMatrix($user['id'],$user['referBy'],1);
             }
+            return "RESULT=OK";
+        }else{
+            return "RESULT=RETRY";
+        }
+
+    }
+    public function PaymentResult(Request $request){
+        Storage::put('pay.log',$request->all());
+
+        $payment = Payment::find($request['PAYMENT_ORDER_ID']);
+        $order = Orders::find($payment['order_id']);
+
+
+
+        if ($request['PAYMENT_STATUS'] == 'paid') {
+
+
+            $payment['status'] = 'ok';
+            $payment->save();
+            $order['status'] = 'success';
+            $order->save();
+
+
+
+            return "RESULT=OK";
+
+        }else{
+
+
+
+
+
+
+
+                return "RESULT=RETRY";
         }
 
     }
     public function CartPage(){
 
-        $user = session()->get('user');
-        $data['products'] = Product::join('baskets','products.id','=','baskets.products')->select('products.*','quantity','total','user_id')->where('user_id',$user['id'])->paginate(12);
-        $products= Product::join('baskets','products.id','=','baskets.products')->where('user_id',$user['id'])->paginate(12);
-        $data['quantity']  = 0;
+        $basket = session()->get('basket');
+        $basket = Basket::find($basket['id']);
+        if ($basket){
+            $data['products'] = Product::join('basket_products','products.id','=','basket_products.product_id')->select('products.*','basket_id','quantity')->where('basket_id',$basket['id'])->paginate(12);
+            $products = Product::join('basket_products','products.id','=','basket_products.product_id')->select('products.*','basket_id','quantity')->where('basket_id',$basket['id'])->paginate(12);
+            $data['quantity']  = 0;
 
-        foreach($products as $product){
-            $data['quantity']  = $data['quantity'] + $product['quantity'];
+
+            $data['total'] = $basket['total'];
+            $data['quantity'] = $basket['quantity'];
+
+
+
+
+
+            return view('cart', $data);
+
+
+        }else{
+            return back()->withErrors('В корзине нет товаров добавьте их чтобы посмотреть');
         }
 
-        $data['total']=0;
-        foreach($products as $product){
-            $data['total'] = $data['total']+$product['total'];
-        }
 
-
-
-
-
-        return view('cart', $data);
 
 
     }
@@ -391,6 +546,9 @@ class UserController extends Controller
         $user= session()->get('user');
 
         $data['user'] = User::find($user['id']);
+
+
+
         return view('up',$data);
     }
 
@@ -406,18 +564,51 @@ class UserController extends Controller
             return back()->withErrors('Недостаточно средств');
             # code...
         }else{
-            $user['status'] = 'partner';
 
-            $user->save();
-            $this->AddUserToMatrix($user->id);
 
-            return back()->with('message','Оплачено, ваш статус: партнер');
+
+
+
+
+            $payment = new Payment();
+            $payment['order_id'] = null;
+            $payment['user_id']=$user['id'];
+            $payment['description'] = 'Повышение статуса пользователя номер: ' .$user['id'];
+            $payment->save();
+            $data['MERCHANT_ID'] = 17274;
+            $data['PAYMENT_AMOUNT'] = 20000;
+            $data['PAYMENT_ORDER_ID'] = $payment['id'];
+            $data['PAYMENT_INFO'] = 'Покупка статуса партнер'.$payment['id'];
+            $data['PAYMENT_RETURN_URL'] = route('SuccessPayment');
+            $data['PAYMENT_RETURN_FAIL_URL'] = route('FailPayment');
+            $data['PAYMENT_CALLBACK_URL'] = route('AccountPaymentResult');
+            ksort($data);
+            $str = '';
+            foreach ($data as $d){
+                $str .= $d;
+            }
+            $secret_key = 'f4f84866-5dd3-11ea-98a5-448a5bd44871';
+            $signature = base64_encode(pack("H*", md5($str.$secret_key)));//
+            $data['PAYMENT_HASH'] =$signature;
+
+
+            $res = self::SendReq('https://spos.kz/merchant/api/create_invoice',$data);
+            if ($res->status == 0){
+
+                return redirect($res->data->url);
+            }else{
+                return redirect()->back();
+            }
+
+
+
 
 
         }
 
 
     }
+
     function AddReferToMatrix($user_id,$refer_id,$type){
         if ( Tree::whereUserId($user_id)->exists()){
             return back()->withErrors('Уже зарегистрирован');
@@ -844,11 +1035,24 @@ class UserController extends Controller
         $data['sliders'] = Product::orderBy('id','desc')->paginate(3);
 
 
+        $basket = session()->get('basket');
+        $basket = Basket::find($basket['id']);
+        session()->put('basket',$basket);
+        session()->save();
 
 
         return view('home',$data);
     }
     public function Shop(){
+        $data['products'] = Product::orderBy('id')->paginate(7);
+        $data['authors'] = Authors::get();
+        $data['categories'] = Categories::get();
+
+
+
+        return view('shop',$data);
+    }
+    public function ShopNew(){
         $data['products'] = Product::orderBy('id')->paginate(7);
         $data['authors'] = Authors::get();
         $data['categories'] = Categories::get();
@@ -955,11 +1159,11 @@ class UserController extends Controller
             'password' =>'required|max:255',
             'phone' => 'required',
             'email' => 'required|email',
-            'zhsn' => 'required|max:14'
+            'zhsn' => 'required|max:14|unique:users,zhsn'
         ];
 
         $messages = [
-
+            "zhsn.unique" =>"Этот ИИН уже занят",
             "name.required" => "Введите ваше имя",
             "password.required" =>"Введите пароль",
             "login.unique" => "Логин занять,введите другой логин",
@@ -985,7 +1189,7 @@ class UserController extends Controller
             $user['zhsn'] = $request['zhsn'];
             $user['phone'] = $request['phone'];
             $user['email'] = $request['email'];
-            $user['status'] = 'partner';
+            $user['status'] = 'registered';
             $user['name']  =$request['name'];
             $user['referBy'] = $request['referBy'];
             $user['bill'] = 0;
@@ -999,17 +1203,52 @@ class UserController extends Controller
 
                 }
             }
-            if ($request['referBy'] == null){
-                $this->AddUserToMatrix($user->id);
-            }elseif($request['referBy'] != null){
-                $this->AddReferToMatrix($user['id'],$request['referBy'],1);
+            $to      = $user['mail'];
+            $subject = 'Регистрация на'.route('Home');
+            $message = 'Ваш логин'. "\t".$user['login'];
+            $headers = 'From: bambook@info.kz' . "\r\n" .
+                'Reply-To: bambook@info.kz' . "\r\n" .
+                'X-Mailer: PHP/' . phpversion();
+            if (mail($to, $subject, $message, $headers)){
+                return redirect()->route('Home')->with('message','Ваш запрос отправлен! Ваш логин отправлен вам на почту ,' .$user['email']);
+            }else{
+                return back()->with('message','Ваш логин'. "\t".$user['login']);
             }
 
 
-            return redirect()->route('Home')->with('message','Ваш запрос отправлен! Ваш логин:'.$user['login']);
         }
     }
+    public function GetDiscount(Request $request){
+        $rules = [
+            'zhsn' => 'required|unique:discounts,zhsn',
+            'login' => 'required|unique:discounts,login',
+            'user_id' => 'required|unique:discounts,user_id',
+            'bs_id' => 'required|unique:discounts,bs_id'
+        ];
+        $messages = [
+            "zhsn.required" => "Введите ИИН",
+            "zhsn.unique" => "Этот ИИН уже занят",
+            "login.required" => "Введите логин от business sauat",
+            "login.unique" => "Этот логини уже занят",
+            "bs_id.required" => "Введите id аккаунта business-sauat",
+            "bs_id.unique" => "Этот id business sauat уже занят",
+        ];
+        $validator = $this->validator($request->all(),$rules,$messages);
+        if ($validator->fails()){
+            return back()->withErrors($validator->errors());
+        }else{
+            $discount = new Discount();
+            $discount['user_id'] = $request['user_id'];
+            $discount['bs_id'] = $request['bs_id'];
+            $discount['login'] = $request['login'];
+            $discount['zhsn'] = $request['zhsn'];
+            $discount['discount'] = 'waiting';
+            $discount->save();
+            return back()->with('message','Ваша заявка будет одобрена через 2-3 часа');
 
+
+        }
+    }
     public function LoginPage(){
         return view('login');
     }
@@ -1050,8 +1289,17 @@ class UserController extends Controller
         return view('edit', $data);
     }
     public function Account(){
-        $data['user'] = session()->get('user');
+        $user = session()->get('user');
+        $data['user'] = User::find($user['id']);
 
+        $exception = Discount::where('id',$user['id'])->first();
+        if (!$exception){
+            $data['exception'] = 1;
+
+        }else{
+            $data['exception'] =0;
+
+        }
         return view('account',$data);
     }
     public function EditUser(Request $request){

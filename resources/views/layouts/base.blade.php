@@ -52,7 +52,13 @@
                 <nav>
                     <ul>
                         <li><a href="{{route('Home')}}">Главная</a></li>
-                        <li><a href="/shop">Магазин</a></li>
+                        <li>
+                            <a href="#" class="dropdown-toggle" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Магазин</a>
+                            <ul  class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                                <li><a href="{{route('shop')}}">Магазин книг</a></li>
+                                <li><a href="{{route('ShopNew')}}">Остальные изделия</a></li>
+                            </ul>
+                        </li>
 
 
                         <li><a href="{{route('Authors')}}">Авторы</a></li>

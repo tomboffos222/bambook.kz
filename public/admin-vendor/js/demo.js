@@ -129,7 +129,7 @@ $(document).ready(function(){
 $(document).ready(function(){
   $(".owl-carousel3").owlCarousel({
     items:4,
-    
+
     nav:true,
     margin:40
   });
@@ -172,7 +172,7 @@ $(document).ready(function(){
     loop:true,
     autoplay:true,
     autoplayTimeout:2500,
-    
+
     dots:true
   });
 });
@@ -181,4 +181,9 @@ $(document).ready(function(){
 $('.account').on('click',function(e){
     e.preventDefault()
     $('.dropdown').toggleClass('active');
+})
+
+$('.shop_clicker').on('click',function(e){
+    e.preventDefault()
+    $('.dropdown_shop').toggleClass('active');
 })

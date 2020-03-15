@@ -2,10 +2,12 @@
 //User
 Route::get('/','UserController@Home')->name('Home');
 Route::get('/shop','UserController@Shop')->name('shop');
+Route::get('/shop/new','UserController@ShopNew')->name('ShopNew');
 Route::get('register/page','UserController@RegisterPage')->name('RegisterPage');
 Route::post('register','UserController@Register')->name('Register');
 Route::get('login/page','UserController@LoginPage')->name('LoginPage');
 Route::post('login','UserController@Login')->name('Login');
+Route::get('get/discount','UserController@GetDiscount')->name('GetDiscount');
 Route::get('shop/{productId?}','UserController@Product')->name('Product');
 Route::get('author','UserController@Authors')->name('Authors');
 Route::get('second/tree/{userId}','UserController@SecondTree')->name('SecondTree');
@@ -18,6 +20,9 @@ Route::get('del/', 'UserController@DeleteProduct')->name('DeleteProduct');
 Route::get('delete/all','UserController@DeleteAll')->name('DeleteAll');
 Route::get('search/form', 'UserController@SearchForm')->name('SearchForm');
 Route::get('order/form','UserController@OrderForm')->name('OrderForm');
+Route::get('success/payment','UserController@SuccessPayment')->name('SuccessPayment');
+Route::get('fail/payment','UserController@FailPayment')->name('FailPayment');
+
 Route::get('order/create','UserController@OrderCreate')->name('OrderCreate');
 Route::middleware(['userCheck'])->group(function () {
     Route::get('Main','UserController@Main')->name('Main');
@@ -68,6 +73,8 @@ Route::name('admin.')->prefix('admin')->middleware(['adminCheck'])->group(functi
     Route::get('withdraws', 'AdminController@WithdrawShow')->name('WithdrawShow');
     Route::get('withdraw/allow/{withdrawId?}' , 'AdminController@WithdrawAllow')->name('WithdrawAllow');
     Route::get('orders','AdminController@Orders')->name('Orders');
+    Route::get('discount/bs','AdminController@Discounts')->name('Discounts');
+    Route::get('discount/{id?}','AdminController@Discount')->name('Discount');
     Route::get('orders/view/{id?}','AdminController@OrdersView')->name('OrdersView');
     Route::get('withdraw/reject/{withdrawId?}', 'AdminController@WithdrawReject')->name('WithdrawReject');
     Route::post('create/product','AdminController@CreateProduct')->name('CreateProduct');

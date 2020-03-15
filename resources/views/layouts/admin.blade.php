@@ -101,6 +101,12 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{{route('admin.Discounts')}}">
+                        <i class="material-icons">loyalty</i>
+                        <span>Скидки BS</span>
+                    </a>
+                </li>
+                <li>
                     <a href="{{route('admin.Orders')}}">
                         <i class="material-icons">shopping_cart</i>
                         <span>Заказы</span>

@@ -32,7 +32,7 @@
 
 				<td>{{$product->price}}KZT</td>
                 <td>
-                    {{$product->total}}KZT
+                    {{$product->price * $product['quantity']}}KZT
                 </td>
 				<td>
                     @php
@@ -41,7 +41,7 @@
                         @endphp
                     <form action="{{route('DeleteProduct')}}" method="get">
 
-                        <input type="hidden" value="{{$user->id}}" name="user_id">
+
                         <input type="hidden" name="product_id" value="{{$product->id}}">
                         <button type="submit"  class="btn btn-danger">Удалить</button>
                     </form>

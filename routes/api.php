@@ -13,6 +13,5 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
-});
+Route::any('result/payment','HomeController@ResultPayment')->name('PaymentResult');
+Route::any('account/result/payment','HomeController@AccountPaymentResult')->name('AccountPaymentResult');

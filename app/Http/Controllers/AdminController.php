@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Discount;
 use App\Models\Admin;
 use App\Models\User;
 use App\Models\Tree;
@@ -465,6 +466,17 @@ class AdminController extends Controller
 
         }
 
+
+    }
+    public function Discounts(){
+        $data['discounts'] = User::join('discounts','discounts.user_id','=','users.id')->select('discounts.*','phone','status','email')->paginate(12);
+        return view('admin.discounts',$data);
+    }
+    public function Discount($userId){
+        $user = Discount::find($userId);
+        $user['discount'] = 'ok';
+        $user->save();
+        return back()->with('message','Одобрено');
 
     }
     protected  function Giver($new){
